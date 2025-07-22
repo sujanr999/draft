@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Story For You</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://css.gg/css?=|arrow-right" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #1a0d0d;
+            color: #f0e0e0;
+            overflow: hidden;
+            cursor: default;
+            background-image: url('https://i.ibb.co/HDZRWFQY/background-image-jpg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            position: relative;
+            animation: waterShimmer 8s infinite ease-in-out;
+        }
+        #background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            z-index: -2;
+        }
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .title-font {
+            font-family: 'Playfair Display', serif;
+            color: #ffe0e0;
+        }
+        .scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            padding: 1rem;
+            visibility: hidden;
+            z-index: 10;
+        }
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .character {
+            width: 60px;
+            height: 100px;
+            position: relative;
+            filter: drop-shadow(0 0 10px rgba(240, 224, 224, 0.5));
+            transition: transform 1.5s ease-in-out;
+        }
+        .head {
+            width: 40px;
+            height: 40px;
+            background: #ffe0e0;
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 10px;
+        }
+        .body {
+            width: 45px;
+            height: 60px;
+            background: #ffe0e0;
+            position: absolute;
+            top: 40px;
+            left: 7.5px;
+            border-radius: 20px 20px 0 0;
+        }
+        .heart {
+            font-size: 50px;
+            color: #ff4d4d;
+            position: absolute;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 1s ease-out, transform 1s ease-out;
+            animation: beat 1.5s infinite ease-out 1s;
+            filter: drop-shadow(0 0 15px #ff4d4d);
+        }
+        @keyframes beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        .caption {
+            font-size: 1.25rem;
+            margin-top: 2.5rem;
+            text-align: center;
+            max-width: 500px;
+            font-weight: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+            transition-delay: 1s;
+            text-shadow: 0 0 8px rgba(0,0,0,0.7);
+            color: #ffe0e0;
+        }
+        .scene.active .caption {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .final-message {
+            background-color: rgba(255, 224, 224, 0.05);
+            border: 1px solid rgba(255, 224, 224, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            color: #ffe0e0;
+        }
+        .final-message .text-pink-300 {
+            color: #ff8080;
+        }
+        #char1-scene1 { transform: translateX(-100vw); }
+        #char2-scene1 { transform: translateX(100vw); }
+        .scene.active #char1-scene1 { transform: translateX(20px); }
+        .scene.active #char2-scene1 { transform: translateX(-20px); }
+        #char1-scene2 { transform: translateX(-50px); }
+        #char2-scene2 { transform: translateX(50px); }
+        .scene.active #char1-scene2 { transform: translateX(-20px); }
+        .scene.active #char2-scene2 { transform: translateX(20px); }
+        .interactive-prompt {
+            margin-top: 3rem;
+            padding: 1rem 2rem;
+            background: rgba(255, 224, 224, 0.1);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            opacity: 0;
+            animation: fadeIn 2s ease-in-out 3s forwards;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            color: #ffe0e0;
+        }
+        .interactive-prompt:hover {
+            background: rgba(255, 224, 224, 0.2);
+            transform: scale(1.05);
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes moonGlow {
+            0% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.8; transform: scale(1); }
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 25% 20%, rgba(255, 200, 200, 0.15) 0%, rgba(255, 200, 200, 0) 40%);
+            animation: moonGlow 5s infinite alternate ease-in-out;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.8;
+        }
+        @keyframes waterShimmer {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.05); }
+            100% { filter: brightness(1); }
+        }
+        .shooting-star {
+            position: fixed;
+            width: 5px;
+            height: 2px;
+            background: linear-gradient(to right, rgba(255, 220, 220, 0) 0%, rgba(255, 220, 220, 1) 50%, rgba(255, 220, 220, 0) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 220, 220, 0.8);
+            animation: shootStar 15s infinite ease-out;
+            z-index: 5;
+            top: -100px;
+            left: -100px;
+            transform: rotate(-30deg);
+            opacity: 0;
+        }
+        @keyframes shootStar {
+            0% { opacity: 0; transform: translate(0, 0) rotate(-30deg); }
+            1% { opacity: 1; }
+            10% { opacity: 1; transform: translate(120vw, 80vh) rotate(-30deg); }
+            11% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        .shooting-star:nth-child(1) { animation-delay: 2s; }
+        .shooting-star:nth-child(2) { animation-delay: 8s; animation-duration: 18s; }
+        .shooting-star:nth-child(3) { animation-delay: 15s; animation-duration: 12s; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <audio id="background-music" autoplay loop>
+        <source src="imp%20song.MP3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div id="background-overlay"></div>
+    <canvas id="background-canvas"></canvas>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+    <div class="shooting-star"></div>
+
+    <div id="start-screen" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+    <button id="start-button" class="bg-pink-500 text-white text-lg px-6 py-3 rounded-full shadow-lg hover:bg-pink-600 transition">
+        Tap to Begin
+    </button>
+</div>
+
+
+    <div id="animation-container" class="relative w-full h-full">
+        <div id="scene1" class="scene">
+            <div class="flex space-x-12">
+                <div id="char1-scene1" class="character">
+                    <div class="head"></div><div class="body"></div>
+                </div>
+                <div id="char2-scene1" class="character">
+                    <div class="head"></div><div class="body"></div>
+                </div>
+            </div>
+            <p class="caption">It started like any other story. Two people, a simple hello.</p>
+        </div>
+        <div id="scene2" class="scene">
+            <div class="flex space-x-8 items-end">
+                <div id="char1-scene2" class="character">
+                    <div class="head"></div><div class="body"></div>
+                </div>
+                <div id="char2-scene2" class="character">
+                    <div class="head"></div><div class="body"></div>
+                </div>
+            </div>
+            <p class="caption">Then, we became friends. Sharing laughs, stories, and quiet moments.</p>
+        </div>
+        <div id="scene3" class="scene">
+            <div class="flex space-x-16 items-center">
+                <div class="character relative">
+                    <div class="head"></div><div class="body"></div>
+                    <div id="heart-icon" class="heart" style="top: -40px; left: 5px;">❤</div>
+                </div>
+                <div class="character">
+                    <div class="head"></div><div class="body"></div>
+                </div>
+            </div>
+            <p class="caption">But somewhere along the way... for me, something changed.</p>
+            <div id="prompt-button" class="interactive-prompt">
+                And so... <i class="gg-arrow-right ml-2"></i>
+            </div>
+        </div>
+        <div id="scene4" class="scene">
+            <div class="final-message shadow-lg">
+                <h1 class="title-font text-2xl md:text-4xl mb-4 text-white">My feelings for you have grown into something more.</h1>
+                <p class="mb-6 text-lg">This site, that drawing, these words—they’re not perfect. But they’re mine, and they’re all for you</p>
+                <p class="text-xl font-semibold text-pink-300">I don’t know where this will lead, but I knew I couldn’t stay silent about what I feel for you</p>
+                <p class="text-xl font-semibold text-pink-300">"I Love you Doni"</p>
+                <p class="mt-6 text-sm text-gray-400">There's no pressure. I just value you too much to not tell you the truth.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const scenes = [
+            document.getElementById('scene1'),
+            document.getElementById('scene2'),
+            document.getElementById('scene3'),
+            document.getElementById('scene4'),
+        ];
+        const heartIcon = document.getElementById('heart-icon');
+        const promptButton = document.getElementById('prompt-button');
+        const backgroundMusic = document.getElementById('background-music');
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+
+        function switchScene(from, to) {
+            if (scenes[from]) scenes[from].classList.remove('active');
+            if (scenes[to]) scenes[to].classList.add('active');
+        }
+
+        function startStory() {
+            // hide overlay
+            if (startScreen) startScreen.style.display = 'none';
+
+            // start music
+            if (backgroundMusic && backgroundMusic.paused) {
+                backgroundMusic.play().catch(console.log);
+            }
+
+            // start scenes
+            setTimeout(() => switchScene(-1, 0), 200);
+            setTimeout(() => switchScene(0, 1), 5500);
+            setTimeout(() => {
+                switchScene(1, 2);
+                setTimeout(() => {
+                    if (heartIcon) {
+                        heartIcon.style.opacity = '1';
+                        heartIcon.style.transform = 'scale(1)';
+                    }
+                }, 2000);
+            }, 10500);
+        }
+
+        if (startButton) {
+            startButton.addEventListener('click', startStory);
+        }
+
+        if (promptButton) {
+            promptButton.addEventListener('click', () => {
+                switchScene(2, 3);
+                if (backgroundMusic.paused) backgroundMusic.play().catch(console.log);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
